@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Custom Keyboard Layout</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #eef1f6;
+  --bg-grad-a: #f5f7fb;
+  --bg-grad-b: #e6eaf2;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --text: #1a1f2c;
+  --text-dim: #7a8494;
+  --text-accent: #2563eb;
+  --border: rgba(10,20,40,0.08);
+  --key-face-a: #ffffff;
+  --key-face-b: #eef1f6;
+  --key-text: rgb(107 114 128 / 40%);
+  --key-alt-text: #1a1f2c;
+  --shadow-key: 0 1px 0 rgba(255,255,255,0.9) inset, 0 -1px 1px rgba(0,0,0,0.04) inset, 0 1px 2px rgba(10,20,40,0.06), 0 3px 8px rgba(10,20,40,0.06);
+  --shadow-kb: 0 1px 2px rgba(10,20,40,0.04), 0 12px 36px rgba(10,20,40,0.08), 0 32px 80px rgba(10,20,40,0.08);
+  --shadow-card: 0 2px 6px rgba(10,20,40,0.06), 0 12px 32px rgba(10,20,40,0.14);
+  --callout-line: #8a97aa;
+  --callout-line-faded: rgba(138,151,170,0.4);
+  --accent: #3861ff;
+  --toast-bg: #1a1f2c;
+  --toast-text: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1117;
+    --bg-grad-a: #131822;
+    --bg-grad-b: #0b0e14;
+    --surface: #171c26;
+    --surface-raised: #1e2430;
+    --text: #e8ecf4;
+    --text-dim: #7a8494;
+    --text-accent: #8fb4ff;
+    --border: rgba(255,255,255,0.07);
+    --key-face-a: #2a313f;
+    --key-face-b: #1f2530;
+    --key-text: rgb(136 146 163 / 40%);
+    --key-alt-text: #f0f3f9;
+    --shadow-key: 0 1px 0 rgba(255,255,255,0.05) inset, 0 -1px 1px rgba(0,0,0,0.4) inset, 0 1px 2px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.35);
+    --shadow-kb: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5), 0 40px 80px rgba(0,0,0,0.4);
+    --shadow-card: 0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.5);
+    --callout-line: #5a6578;
+    --callout-line-faded: rgba(90,101,120,0.35);
+    --accent: #6d94ff;
+    --toast-bg: #e8ecf4;
+    --toast-text: #0e1117;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: radial-gradient(ellipse at top, var(--bg-grad-a) 0%, var(--bg-grad-b) 100%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  overflow-x: auto;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 0 50px;
+}
+h1 {
+  font-weight: 500;
+  font-size: 22px;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+.sub {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-bottom: 40px;
+  letter-spacing: 0.01em;
+}
+.stage {
+  position: relative;
+  display: inline-block;
+  text-align: initial;
+}
+.callouts-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+.keyboard {
+  position: relative;
+  padding: 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-grad-b) 140%);
+  box-shadow: var(--shadow-kb);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.row { display: flex; gap: 6px; }
+.key {
+  position: relative;
+  height: 56px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--key-face-a) 0%, var(--key-face-b) 100%);
+  box-shadow: var(--shadow-key);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  display: flex;
+  user-select: none;
+}
+.key-inner {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+}
+.side-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-width: 0;
+}
+.side-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  text-align: right;
+  margin-right: -3px;
+}
+.lbl-en {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--key-text);
+  line-height: 1;
+}
+.lbl-ru {
+  font-size: 12px;
+  color: var(--key-text);
+  opacity: 0.65;
+  line-height: 1;
+}
+.alt {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--key-alt-text);
+  line-height: 1;
+  cursor: pointer;
+  position: relative;
+  padding: 1px 0px;
+  border-radius: 3px;
+  transition: background 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  min-width: 14px;
+  min-height: 17px;
+  justify-content: center;
+}
+.alt:hover {
+  color: var(--accent);
+  background: rgba(56, 97, 255, 0.09);
+}
+/*.alt.altgr-shift { font-size: 13px; opacity: 0.85; }*/
+.alt.altgr { font-size: 15px; margin-top: auto }
+.combining, .invisible { background: light-dark(rgb(4 28 82 / 20%), rgb(195 209 243 / 20%)); }
+.invisible { color: rgb(from currentColor r g b / 20%) !important }
+.alt.multichar {
+  font-size: 5.5px;
+}
+.alt .space-glyph {
+  display: inline-block;
+  width: var(--space-width);
+  height: 3px;
+  margin-top: 8px;
+  border-top: 1px solid transparent;
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  opacity: 0.55;
+}
+
+.key-ctrl { align-items: flex-end; padding-bottom: 6px; }
+.key-ctrl .key-label {
+  font-size: 11px;
+  color: var(--key-text);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.key-space {
+  justify-content: center;
+}
+.key-space .key-label {
+  font-size: 11px;
+  color: var(--key-text);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.key-space .side-right {
+  align-items: center;
+}
+.alt.flash { background: rgba(56,97,255,0.25); color: var(--accent); }
+
+/* Callout */
+.callout-card {
+  position: absolute;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px 12px 14px;
+  box-shadow: var(--shadow-card);
+  font-size: 12.5px;
+  width: 380px;
+  line-height: 1.45;
+  transform: translate(0,0);
+  z-index: 2;
+}
+.callout-card .cc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.callout-card .cc-char {
+  font-size: 26px;
+  line-height: 1;
+  min-width: 28px;
+  text-align: center;
+  color: var(--text);
+  font-weight: 500;
+  flex-shrink: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background: light-dark(rgb(4 28 82 / 20%), rgb(195 209 243 / 20%));
+  border-radius: 4px;
+  margin: 5px 0px;
+}
+.callout-card .cc-char .space-glyph {
+  display: inline-block;
+  width: var(--space-width);
+  height: 3px;
+  margin-top: 16px;
+  margin-bottom: 3px;
+  border-top: 1px solid transparent;
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  opacity: 0.6;
+}
+.callout-card .cc-meta { min-width: 0; flex: 1; }
+.callout-card .cc-code {
+  font-family: 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+  font-size: 11.5px;
+  color: var(--text-accent);
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: -4px;
+  transition: background 0.15s;
+  display: inline-block;
+}
+.callout-card .cc-code:hover { background: rgba(56, 97, 255, 0.1); }
+.callout-card .cc-name {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.callout-card .cc-expl {
+  color: var(--text);
+  opacity: 0.85;
+  font-size: 12.5px;
+}
+
+/* Tooltip */
+#tooltip {
+  position: fixed;
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  /*width: 190px;*/
+  max-width: 300px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 9999;
+  box-shadow: var(--shadow-card);
+
+}
+#tooltip.show { opacity: 1; transform: translateY(0); pointer-events: all;}
+#tooltip .tt-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+#tooltip .tt-char { font-size: 22px; line-height: 1; min-width: 24px; text-align: center; white-space: nowrap; flex-shrink: 0; }
+#tooltip .tt-char .space-glyph {
+  display: inline-block;
+  width: var(--space-width);
+  height: 3px;
+  margin-top: 8px;
+  border-top: 1px solid transparent;
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  opacity: 0.6;
+}
+#tooltip .tt-code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-accent);
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: -4px;
+  display: inline-block;
+}
+#tooltip .tt-code:hover { background: rgba(56,97,255,0.1); }
+#tooltip .tt-name {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  padding: 10px 18px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  font-size: 13px;
+  z-index: 10000;
+  font-weight: 500;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.hint {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.converter {
+  margin-top: 250px;
+  width: min(760px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  display: none;
+}
+.converter label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.converter input,
+.converter textarea {
+  width: 100%;
+  font-family: 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+  outline: none;
+  resize: vertical;
+}
+.converter input:focus,
+.converter textarea:focus {
+  border-color: var(--accent);
+}
+.converter textarea {
+  min-height: 90px;
+  line-height: 1.5;
+}
+.intro {
+  position: absolute;
+  top: 25px;
+  max-width: 760px;
+  margin: 0 auto 28px;
+  padding: 0 16px;
+  font-size: 16px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.intro a {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+.intro a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+
+<div class="intro">
+  Это кастомная раскладка для программы <a href="https://github.com/Simbaruzz/hypetype" target="_blank" rel="noopener">hypetype</a>. <a href="config.ini" download>Скачать</a>
+</div>
+
+<div class="stage" id="stage">
+  <svg class="callouts-svg" id="calloutsSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="keyboard" id="keyboard"></div>
+</div>
+
+<div class="converter">
+  <label for="conv-text">Текст</label>
+  <input id="conv-text" type="text" placeholder="Введите любые символы…" autocomplete="off" spellcheck="false">
+  <label for="conv-escaped">Кодовые точки Unicode (JS-формат)</label>
+  <textarea id="conv-escaped" placeholder="\u0020\u0041…" spellcheck="false"></textarea>
+</div>
+
+<div id="tooltip"></div>
+<div id="toast">Скопировано</div>
+
+<script>
+const defaultTxt = `\
+SC002=₁,¹
+SC003=₂,²
+SC004=₃,³
+SC005=$,#
+SC006=‰,█
+SC007=↑,̂
+SC008=⏵,⏴
+SC009=∞,★
+SC00A=←,‹
+SC00B=→,›
+SC00C=—,–
+SC00D=≠,±
+SC010=✓,̆
+SC011=ω,Ω
+SC012=ε,€
+SC013=⇒,̊
+SC014=θ,̃
+SC015=♡,❤
+SC016=μ,̈
+SC017=ᵢ,𝑖
+SC018=°,⌀
+SC019=π,₽
+SC01A=[,{
+SC01B=],}
+SC01E=α,≈
+SC01F=\u2009,\u200A
+SC020=δ,Δ
+SC021=φ,🔥
+SC022=γ,👍
+SC023=\u00AD,\u2011
+SC024=ⱼ,¯\\_(ツ)_/¯
+SC025=“,‘
+SC026=”,’
+SC027=′,́
+SC028=″,̋
+SC029=\`,̀
+SC02B=|,/
+SC02C=\u200B,\u2060
+SC02D=×,⋅
+SC02E=©,̧
+SC02F=↓,̌
+SC030=β,👎
+SC031=№,ⁿ
+SC032=−,÷
+SC033=«,„
+SC034=»,“
+SC035=·,•
+SC039=\u00A0,\u202F`;
+//…
+const altChars = {};  // sc -> {altgr, altgrShift}
+for (const line of defaultTxt.split('\n')) {
+  const m = line.match(/^SC([0-9A-F]+)=(.*)$/);
+  if (!m) continue;
+  const sc = m[1];
+  const rest = m[2];
+  const idx = rest.indexOf(',');
+  const a = idx === -1 ? rest : rest.slice(0, idx);
+  const b = idx === -1 ? '' : rest.slice(idx + 1);
+  altChars[sc] = { altgr: a, altgrShift: b };
+}
+
+// ============================================================
+// Unicode names (only for chars that appear in the layout)
+// ============================================================
+const UNICODE_NAMES = {
+  0x0023: 'NUMBER SIGN',
+  0x0024: 'DOLLAR SIGN',
+  0x002F: 'SOLIDUS',
+  0x005B: 'LEFT SQUARE BRACKET',
+  0x005D: 'RIGHT SQUARE BRACKET',
+  0x0060: 'GRAVE ACCENT',
+  0x007B: 'LEFT CURLY BRACKET',
+  0x007C: 'VERTICAL LINE',
+  0x007D: 'RIGHT CURLY BRACKET',
+  0x00A0: 'NO-BREAK SPACE',
+  0x00A9: 'COPYRIGHT SIGN',
+  0x00AB: 'LEFT-POINTING DOUBLE ANGLE QUOTATION MARK',
+  0x00AD: 'SOFT HYPHEN',
+  0x00B0: 'DEGREE SIGN',
+  0x00B1: 'PLUS-MINUS SIGN',
+  0x00B2: 'SUPERSCRIPT TWO',
+  0x00B3: 'SUPERSCRIPT THREE',
+  0x00B7: 'MIDDLE DOT',
+  0x00B9: 'SUPERSCRIPT ONE',
+  0x00BB: 'RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK',
+  0x00D7: 'MULTIPLICATION SIGN',
+  0x00F7: 'DIVISION SIGN',
+  0x0300: 'COMBINING GRAVE ACCENT',
+  0x0301: 'COMBINING ACUTE ACCENT',
+  0x0302: 'COMBINING CIRCUMFLEX ACCENT',
+  0x0303: 'COMBINING TILDE',
+  0x0306: 'COMBINING BREVE',
+  0x0308: 'COMBINING DIAERESIS',
+  0x030A: 'COMBINING RING ABOVE',
+  0x030B: 'COMBINING DOUBLE ACUTE ACCENT',
+  0x030C: 'COMBINING CARON',
+  0x0327: 'COMBINING CEDILLA',
+  0x0394: 'GREEK CAPITAL LETTER DELTA',
+  0x03A9: 'GREEK CAPITAL LETTER OMEGA',
+  0x03B1: 'GREEK SMALL LETTER ALPHA',
+  0x03B2: 'GREEK SMALL LETTER BETA',
+  0x03B3: 'GREEK SMALL LETTER GAMMA',
+  0x03B4: 'GREEK SMALL LETTER DELTA',
+  0x03B5: 'GREEK SMALL LETTER EPSILON',
+  0x03B8: 'GREEK SMALL LETTER THETA',
+  0x03BC: 'GREEK SMALL LETTER MU',
+  0x03C0: 'GREEK SMALL LETTER PI',
+  0x03C6: 'GREEK SMALL LETTER PHI',
+  0x03C9: 'GREEK SMALL LETTER OMEGA',
+  0x1D62: 'LATIN SUBSCRIPT SMALL LETTER I',
+  0x2009: 'THIN SPACE',
+  0x200A: 'HAIR SPACE',
+  0x200B: 'ZERO WIDTH SPACE',
+  0x2011: 'NON-BREAKING HYPHEN',
+  0x2013: 'EN DASH',
+  0x2014: 'EM DASH',
+  0x2018: 'LEFT SINGLE QUOTATION MARK',
+  0x2019: 'RIGHT SINGLE QUOTATION MARK',
+  0x201C: 'LEFT DOUBLE QUOTATION MARK',
+  0x201D: 'RIGHT DOUBLE QUOTATION MARK',
+  0x201E: 'DOUBLE LOW-9 QUOTATION MARK',
+  0x2022: 'BULLET',
+  0x202F: 'NARROW NO-BREAK SPACE',
+  0x2030: 'PER MILLE SIGN',
+  0x2032: 'PRIME',
+  0x2033: 'DOUBLE PRIME',
+  0x2039: 'SINGLE LEFT-POINTING ANGLE QUOTATION MARK',
+  0x203A: 'SINGLE RIGHT-POINTING ANGLE QUOTATION MARK',
+  0x2060: 'WORD JOINER',
+  0x207F: 'SUPERSCRIPT LATIN SMALL LETTER N',
+  0x2081: 'SUBSCRIPT ONE',
+  0x2082: 'SUBSCRIPT TWO',
+  0x2083: 'SUBSCRIPT THREE',
+  0x20AC: 'EURO SIGN',
+  0x20BD: 'RUBLE SIGN',
+  0x2116: 'NUMERO SIGN',
+  0x2190: 'LEFTWARDS ARROW',
+  0x2191: 'UPWARDS ARROW',
+  0x2192: 'RIGHTWARDS ARROW',
+  0x2193: 'DOWNWARDS ARROW',
+  0x21D2: 'RIGHTWARDS DOUBLE ARROW',
+  0x2212: 'MINUS SIGN',
+  0x221E: 'INFINITY',
+  0x2248: 'ALMOST EQUAL TO',
+  0x2260: 'NOT EQUAL TO',
+  0x22C5: 'DOT OPERATOR',
+  0x2300: 'DIAMETER SIGN',
+  0x23F4: 'BLACK MEDIUM LEFT-POINTING TRIANGLE',
+  0x23F5: 'BLACK MEDIUM RIGHT-POINTING TRIANGLE',
+  0x2588: 'FULL BLOCK',
+  0x2605: 'BLACK STAR',
+  0x2661: 'WHITE HEART SUIT',
+  0x2713: 'CHECK MARK',
+  0x2764: 'HEAVY BLACK HEART',
+  0x276E: 'HEAVY LEFT-POINTING ANGLE QUOTATION MARK ORNAMENT',
+  0x276F: 'HEAVY RIGHT-POINTING ANGLE QUOTATION MARK ORNAMENT',
+  0x1D456: 'MATHEMATICAL ITALIC SMALL I',
+  0x1F44D: 'THUMBS UP SIGN',
+  0x1F44E: 'THUMBS DOWN SIGN',
+  0x1F525: 'FIRE',
+};
+
+function unicodeName(ch) {
+  if (!ch) return '';
+  const cp = ch.codePointAt(0);
+  return UNICODE_NAMES[cp] || '';
+}
+function unicodeHex(ch) {
+  if (!ch) return '';
+  return [...ch].map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ');
+}
+function isCombining(ch) {
+  if (!ch) return false;
+  const cp = ch.codePointAt(0);
+  return (cp >= 0x0300 && cp <= 0x036F) || (cp >= 0x1AB0 && cp <= 0x1AFF) || (cp == 0x00AD);
+}
+function isSpacelike(ch) {
+  if (!ch) return false;
+  const cp = ch.codePointAt(0);
+  if (!(cp === 0x0020 || cp === 0x00A0 || (cp >= 0x2000 && cp <= 0x200A) || cp === 0x202F || cp === 0x205F || cp === 0x3000)) return false;
+  if (cp == 0x2009 || cp == 0x202F) return 6;
+  if (cp == 0x200A) return 4;
+  return 11;
+}
+
+// ============================================================
+// Keyboard layout definition
+// ============================================================
+const layout = [
+  [
+    { sc: '029', en: '`', ru: 'Ё' },
+    { sc: '002', en: '1' },
+    { sc: '003', en: '2' },
+    { sc: '004', en: '3' },
+    { sc: '005', en: '4' },
+    { sc: '006', en: '5' },
+    { sc: '007', en: '6' },
+    { sc: '008', en: '7' },
+    { sc: '009', en: '8' },
+    { sc: '00A', en: '9' },
+    { sc: '00B', en: '0' },
+    { sc: '00C', en: '-' },
+    { sc: '00D', en: '=' },
+    { label: 'Backspace', w: 2, ctrl: true }
+  ],
+  [
+    { label: 'Tab', w: 1.5, ctrl: true },
+    { sc: '010', en: 'Q', ru: 'Й' },
+    { sc: '011', en: 'W', ru: 'Ц' },
+    { sc: '012', en: 'E', ru: 'У' },
+    { sc: '013', en: 'R', ru: 'К' },
+    { sc: '014', en: 'T', ru: 'Е' },
+    { sc: '015', en: 'Y', ru: 'Н' },
+    { sc: '016', en: 'U', ru: 'Г' },
+    { sc: '017', en: 'I', ru: 'Ш' },
+    { sc: '018', en: 'O', ru: 'Щ' },
+    { sc: '019', en: 'P', ru: 'З' },
+    { sc: '01A', en: '[', ru: 'Х' },
+    { sc: '01B', en: ']', ru: 'Ъ' },
+    { sc: '02B', en: '\\', w: 1.5 }
+  ],
+  [
+    { label: 'Caps Lock', w: 1.75, ctrl: true },
+    { sc: '01E', en: 'A', ru: 'Ф' },
+    { sc: '01F', en: 'S', ru: 'Ы' },
+    { sc: '020', en: 'D', ru: 'В' },
+    { sc: '021', en: 'F', ru: 'А' },
+    { sc: '022', en: 'G', ru: 'П' },
+    { sc: '023', en: 'H', ru: 'Р' },
+    { sc: '024', en: 'J', ru: 'О' },
+    { sc: '025', en: 'K', ru: 'Л' },
+    { sc: '026', en: 'L', ru: 'Д' },
+    { sc: '027', en: ';', ru: 'Ж' },
+    { sc: '028', en: "'", ru: 'Э' },
+    { label: 'Enter', w: 2.25, ctrl: true }
+  ],
+  [
+    { label: 'Shift', w: 2.25, ctrl: true },
+    { sc: '02C', en: 'Z', ru: 'Я' },
+    { sc: '02D', en: 'X', ru: 'Ч' },
+    { sc: '02E', en: 'C', ru: 'С' },
+    { sc: '02F', en: 'V', ru: 'М' },
+    { sc: '030', en: 'B', ru: 'И' },
+    { sc: '031', en: 'N', ru: 'Т' },
+    { sc: '032', en: 'M', ru: 'Ь' },
+    { sc: '033', en: ',', ru: 'Б' },
+    { sc: '034', en: '.', ru: 'Ю' },
+    { sc: '035', en: '/', ru: '.' },
+    { label: 'Shift', w: 2.75, ctrl: true }
+  ],
+  [
+    { label: 'Ctrl', w: 1.25, ctrl: true },
+    { label: 'Win', w: 1.25, ctrl: true },
+    { label: 'Alt', w: 1.25, ctrl: true },
+    { sc: '039', w: 6.25, space: true },
+    { label: 'AltGr', w: 1.25, ctrl: true },
+    { label: 'Win', w: 1.25, ctrl: true },
+    { label: 'Menu', w: 1.25, ctrl: true },
+    { label: 'Ctrl', w: 1.25, ctrl: true }
+  ]
+];
+
+// ============================================================
+// Callouts — easy to extend: push more into this array
+// ============================================================
+const callouts = [
+  {
+    target: { type: 'key', sc: '023' },
+    explanation: 'Мягкий перенос — по умолчанию невидим, но разрешает перенос слова в этом месте. Неразрывный дефис — наоборот, видимый и запрещает перенос.',
+    dx: -343, dy: -300
+  },
+  {
+    target: { type: 'key', sc: '02C' },
+    explanation: 'Пробел нулевой ширины не склеивает слова и растягивается при выключке по ширине, как прочие пробелы. Символ объединения слов работает как неразрывный пробел нулевой ширины.',
+    dx: -460, dy: -90
+  },
+  {
+    target: { type: 'char', sc: '02D', which: 'altgrShift' },
+    explanation: 'Математический оператор «точка» (обычно означает умножение). Не путать с интерпунктом.',
+    dx: -440, dy: 50
+  },
+  {
+    target: { type: 'key', sc: '039' },
+    explanation: 'Неразрывный пробел и узкий неразрывный пробел.',
+    dx: -500, dy: 90
+  },
+  {
+    target: { type: 'key', sc: '01F' },
+    explanation: 'Узкий пробел (тонкая шпация) и волосяной пробел.',
+    dx: -580, dy: -160
+  },
+  {
+    target: { type: 'group', items: [
+      { sc: '025', which: 'altgr' }, { sc: '026', which: 'altgr' },
+      { sc: '025', which: 'altgrShift' }, { sc: '026', which: 'altgrShift' }
+    ]},
+    explanation: '“Двойные лапки” — основные кавычки в английском языке.<br/>‘Одиночные лапки’ — вложенные; также ’ — апостроф.<br/>(В британском английском — наоборот)',
+    dx: -56, dy: -370
+  },
+  {
+    target: { type: 'key', sc: '00C' },
+    explanation: 'Тире и короткое (среднее, цифровое) тире. Короткое тире может применяться для числовых диапазонов (1914–1918) и в качестве маркера списков. См. также <i>минус</i>',
+    dx: 210, dy: -150
+  },
+  {
+    target: { type: 'group', items: [
+      { sc: '033', which: 'altgr' }, { sc: '034', which: 'altgr' },
+      { sc: '033', which: 'altgrShift' }, { sc: '034', which: 'altgrShift' }
+    ]},
+    explanation: '«Ёлочки» — основные кавычки в русском языке.<br/>„Лапки“ — вложенные кавычки внутри «ёлочек» или для прямой речи. Кстати, закрывающая лапка в русском (“) — это тот же символ, что и открывающая лапка в английском (U+201C, Left Double Quotation Mark).',
+    dx: 40, dy: 90
+  },
+  {
+    target: { type: 'group', items: [
+      { sc: '027', which: 'altgr' },
+      { sc: '028', which: 'altgr' },
+    ] },
+    explanation: 'Штрих и двойной штрих: минуты/секунды (10′ 30″), футы/дюймы, угловые меры. Не путать с апострофом/кавычками.',
+    dx: 180, dy: -138
+  },
+  {
+    target: { type: 'key', sc: '035' },
+    explanation: 'Интерпункт (не путать с математическим оператором «точка») и буллит.',
+    dx: 60, dy: -10
+  },
+  {
+    target: { type: 'char', sc: '032', which: 'altgr' }, // minus
+    explanation: 'Минус — отличается от дефиса шириной (равен по ширине плюсу и цифрам) и центровкой по оси цифр. Визуально близок к короткому тире.',
+    dx: -260, dy: 110
+  },
+];
+
+// ============================================================
+// Rendering
+// ============================================================
+const KEY_UNIT = 62;   // base width including gap
+const KEY_GAP  = 6;
+const KEY_BASE = KEY_UNIT - KEY_GAP; // 56
+
+function keyWidth(w) {
+  return (w || 1) * KEY_UNIT - KEY_GAP;
+}
+
+function renderCharDisplay(ch, cls) {
+  // Returns HTML for displaying a single character: handles spaces, combining marks.
+  if (!ch) return '';
+  const combining = isCombining(ch);
+  const space = isSpacelike(ch);
+  const invisible = ['\u00AD', '\u200B', '\u2060'].includes(ch);
+  const inner = space
+    ? `<span class="space-glyph" style="--space-width: ${space}px"></span>`
+    : (ch == '\u00AD' ? '-' : ch);
+  return `<span class="${cls}${combining ? ' combining' : ''}${invisible ? ' invisible' : ''}${ch.length > 2 ? ' multichar' : ''}" data-ch="${ch.replace(/"/g, '&quot;')}">${inner}</span>`;
+}
+
+const keyboard = document.getElementById('keyboard');
+// Build keyboard
+layout.forEach((row, ri) => {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'row';
+  row.forEach((k, ki) => {
+    const el = document.createElement('div');
+    el.className = 'key';
+    el.style.width = keyWidth(k.w) + 'px';
+    el.dataset.sc = k.sc || '';
+
+    if (k.space) {
+      el.classList.add('key-space');
+      // Place AltGr symbols at the right end of the space bar
+      const chars = altChars[k.sc];
+      if (chars) {
+        const right = document.createElement('div');
+        right.className = 'side-right';
+        right.innerHTML = `
+          ${renderCharDisplay(chars.altgrShift, 'alt altgr-shift')}
+          ${renderCharDisplay(chars.altgr, 'alt altgr')}
+        `;
+        el.appendChild(right);
+      }
+    } else if (k.ctrl) {
+      el.classList.add('key-ctrl');
+      el.innerHTML = `<div class="key-inner"><span class="key-label">${k.label}</span></div>`;
+    } else {
+      const chars = altChars[k.sc] || { altgr: '', altgrShift: '' };
+      el.innerHTML = `
+        <div class="key-inner">
+          <div class="side-left">
+            <span class="lbl-en">${k.en || ''}</span>
+            <span class="lbl-ru">${k.ru || ''}</span>
+          </div>
+          <div class="side-right">
+            ${renderCharDisplay(chars.altgrShift, 'alt altgr-shift')}
+            ${renderCharDisplay(chars.altgr, 'alt altgr')}
+          </div>
+        </div>`;
+    }
+    rowEl.appendChild(el);
+  });
+  keyboard.appendChild(rowEl);
+});
+
+// ============================================================
+// Callouts
+// ============================================================
+const stage = document.getElementById('stage');
+const svg = document.getElementById('calloutsSvg');
+
+function getAltElement(sc, which) {
+  const key = keyboard.querySelector(`.key[data-sc="${sc}"]`);
+  if (!key) return null;
+  const cls = which === 'altgrShift' ? '.alt.altgr-shift' : '.alt.altgr';
+  return key.querySelector(cls);
+}
+function getKeyElement(sc) {
+  return keyboard.querySelector(`.key[data-sc="${sc}"]`);
+}
+
+function rectIn(stage, el) {
+  const sb = stage.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return {
+    x: r.left - sb.left,
+    y: r.top - sb.top,
+    w: r.width,
+    h: r.height,
+    cx: r.left - sb.left + r.width / 2,
+    cy: r.top - sb.top + r.height / 2
+  };
+}
+function unionRect(rects) {
+  const x0 = Math.min(...rects.map(r => r.x));
+  const y0 = Math.min(...rects.map(r => r.y));
+  const x1 = Math.max(...rects.map(r => r.x + r.w));
+  const y1 = Math.max(...rects.map(r => r.y + r.h));
+  return {
+    x: x0, y: y0, w: x1 - x0, h: y1 - y0,
+    cx: (x0 + x1) / 2, cy: (y0 + y1) / 2
+  };
+}
+
+// compute intersection point from rect-center towards external point (ax,ay)
+// returns the point on rect boundary
+function rectEdgePoint(r, ax, ay) {
+  const dx = ax - r.cx;
+  const dy = ay - r.cy;
+  if (dx === 0 && dy === 0) return { x: r.cx, y: r.cy };
+  const hx = r.w / 2, hy = r.h / 2;
+  const tx = dx === 0 ? Infinity : hx / Math.abs(dx);
+  const ty = dy === 0 ? Infinity : hy / Math.abs(dy);
+  const t = Math.min(tx, ty);
+  return { x: r.cx + dx * t, y: r.cy + dy * t };
+}
+
+function resolveTarget(callout) {
+  const t = callout.target;
+  if (t.type === 'char') {
+    const el = getAltElement(t.sc, t.which);
+    if (!el) return null;
+    return { kind: 'single', rect: rectIn(stage, el), element: el };
+  }
+  if (t.type === 'key') {
+    const el = getKeyElement(t.sc);
+    if (!el) return null;
+    return { kind: 'single', rect: rectIn(stage, el), element: el };
+  }
+  if (t.type === 'group') {
+    const rects = [];
+    for (const it of t.items) {
+      const el = it.which ? getAltElement(it.sc, it.which) : getKeyElement(it.sc);
+      if (el) rects.push(rectIn(stage, el));
+    }
+    if (!rects.length) return null;
+    const pad = 6;
+    const u = unionRect(rects);
+    return {
+      kind: 'group',
+      rect: { x: u.x - pad, y: u.y - pad, w: u.w + pad * 2, h: u.h + pad * 2, cx: u.cx, cy: u.cy },
+      individuals: rects
+    };
+  }
+  return null;
+}
+
+// Unified content builder for card/tooltip
+function charInfoHTML(ch, opts = {}) {
+  if (!ch) return '';
+  const combining = isCombining(ch);
+  const space = isSpacelike(ch);
+  const invisible = ['\u00AD', '\u200B', '\u2060'].includes(ch);
+  const glyph = space
+    ? `<span class="space-glyph" style="--space-width: ${space}px"></span>`
+    : (ch == '\u00AD' ? '-' : ch);
+  const cls = (opts.charClass || 'cc-char') + (combining ? ' combining' : '') + (invisible ? ' invisible' : '');
+  const codeCls = opts.codeClass || 'cc-code';
+  const nameCls = opts.nameClass || 'cc-name';
+  const metaCls = opts.metaClass || 'cc-meta';
+  const headCls = opts.headClass || 'cc-head';
+  return `
+    <div class="${headCls}">
+      <span class="${cls}">${glyph}</span>
+      <div class="${metaCls}">
+        <span class="${codeCls}" data-copy-cp="${unicodeHex(ch)}">${unicodeHex(ch)}</span>
+        <div class="${nameCls}">${unicodeName(ch) || '\u00A0'}</div>
+      </div>
+    </div>
+  `;
+}
+
+// Create card DOM for a callout
+function createCalloutCard(callout, targetInfo) {
+  const t = callout.target;
+  let ch = '';
+  if (t.type === 'char') {
+    const chars = altChars[t.sc];
+    ch = chars ? chars[t.which] : '';
+  } else if (t.type === 'key') {
+    // Show both altgr/altgr+shift chars if available; render the primary (altgr) in the head
+    const chars = altChars[t.sc];
+    ch = chars ? (chars.altgr || chars.altgrShift) : '';
+  } else if (t.type === 'group') {
+    // Use first item's character for the head
+    const it = t.items[0];
+    const chars = altChars[it.sc];
+    ch = chars ? chars[it.which] : '';
+  }
+
+  // Special: if target is a 'key' with two chars, show both lines
+  let altGrHTML = '';
+  let altGrShiftHTML = '';
+  if (t.type === 'key' && altChars[t.sc]) {
+    const { altgr, altgrShift } = altChars[t.sc];
+    if (altgr) altGrHTML = miniLine(altgr);
+    if (altgrShift && altgrShift !== altgr) altGrShiftHTML = miniLine(altgrShift);
+  } else if (t.type === 'group') {
+    altGrHTML = t.items.map(it => {
+      const chars = altChars[it.sc];
+      return chars && it.which == 'altgr' ? miniLine(chars[it.which]) : '';
+    }).filter(Boolean).join('');
+    altGrShiftHTML = t.items.map(it => {
+      const chars = altChars[it.sc];
+      return chars && it.which == 'altgrShift' ? miniLine(chars[it.which]) : '';
+    }).filter(Boolean).join('');
+  } else {
+    altGrHTML = charInfoHTML(ch);
+  }
+
+  const card = document.createElement('div');
+  card.className = 'callout-card';
+  card.innerHTML = `
+    <div style="display: flex; flex-direction: row; gap: 6px;margin-top: -1px; margin-bottom: 8px;">
+      <div style="display:flex; flex-direction:column; gap:6px; flex: 1;">${altGrHTML}</div>
+      <div style="display:flex; flex-direction:column; gap:6px; flex: 1;">${altGrShiftHTML}</div>
+    </div>
+    <div class="cc-expl">${callout.explanation}</div>
+  `;
+  stage.appendChild(card);
+  // Position card: anchor is target rect's center + dx/dy relative offset
+  const r = targetInfo.rect;
+  const anchorX = (callout.dx >= 0 ? r.x + r.w : r.x);
+  const anchorY = (callout.dy >= 0 ? r.y + r.h : r.y);
+  const left = anchorX + callout.dx;
+  const top  = anchorY + callout.dy;
+  card.style.left = left + 'px';
+  card.style.top  = top + 'px';
+
+  return card;
+}
+
+function miniLine(ch) {
+  if (!ch) return '';
+  const combining = isCombining(ch);
+  const space = isSpacelike(ch);
+  const invisible = ['\u00AD', '\u200B', '\u2060'].includes(ch);
+  const glyph = space ? `<span class="space-glyph" style="--space-width: ${space}px"></span>` : (ch == '\u00AD' ? '-' : ch);
+  return `
+    <div style="display:flex; align-items:start; gap:10px;">
+      <span class="cc-char${combining ? ' combining' : ''}${invisible ? ' invisible' : ''}" style="font-size:22px; min-width:24px;">${glyph}</span>
+      <div class="cc-meta">
+        <span class="cc-code" data-copy-cp="${unicodeHex(ch)}">${unicodeHex(ch)}</span>
+        <div class="cc-name">${unicodeName(ch)}</div>
+      </div>
+    </div>
+  `;
+}
+
+// Draw SVG polyline + group rect
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(name, attrs) {
+  const e = document.createElementNS(SVG_NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function drawCalloutLine(callout, targetInfo, cardEl) {
+  const cardRect = rectIn(stage, cardEl);
+  // Target rectangle (for 'single' — the element itself; for 'group' — the padded union)
+  const targ = targetInfo.rect;
+
+  // Line from card-edge-point to target-edge-point, going through an L-bend
+  // Determine card->target direction
+  const cx = cardRect.cx, cy = cardRect.cy;
+  const tx = targ.cx, ty = targ.cy;
+
+  // Card exit point: on the side facing target
+  const cardExit = rectEdgePoint(cardRect, tx, ty);
+  // Target entry point: on the side facing card
+  const targEntry = rectEdgePoint(targ, cx, cy);
+
+  // Add a gentle bend: mid-point pulled slightly perpendicular to main axis
+  const dx = targEntry.x - cardExit.x;
+  const dy = targEntry.y - cardExit.y;
+  const horiz = Math.abs(dx) > Math.abs(dy);
+  let mid;
+  if (horiz) {
+    mid = { x: cardExit.x + dx * 0.5, y: cardExit.y };
+  } else {
+    mid = { x: cardExit.x, y: cardExit.y + dy * 0.5 };
+  }
+
+  // If group: draw dashed rect around individuals (under the line)
+  if (targetInfo.kind === 'group') {
+    const rect = svgEl('rect', {
+      x: targ.x, y: targ.y, width: targ.w, height: targ.h,
+      rx: 6, ry: 6,
+      fill: 'none',
+      'stroke-width': '1',
+      'stroke-dasharray': '4 3'
+    });
+    rect.style.stroke = 'var(--callout-line)';
+    svg.appendChild(rect);
+  }
+
+  const pts = `${cardExit.x},${cardExit.y} ${mid.x},${mid.y} ${targEntry.x},${targEntry.y}`;
+  const poly = svgEl('polyline', {
+    points: pts,
+    fill: 'none',
+    'stroke-width': '1.25',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round'
+  });
+  poly.style.stroke = 'var(--callout-line)';
+  svg.appendChild(poly);
+
+  // Small dot at target end
+  const dot = svgEl('circle', {
+    cx: targEntry.x, cy: targEntry.y, r: 2.5
+  });
+  dot.style.fill = 'var(--callout-line)';
+  svg.appendChild(dot);
+}
+
+let cardEls = [];
+function renderCallouts() {
+  // Clear previous
+  svg.innerHTML = '';
+  cardEls.forEach(c => c.remove());
+  cardEls = [];
+
+  // Ensure SVG covers stage
+  const sb = stage.getBoundingClientRect();
+  svg.setAttribute('viewBox', `0 0 ${sb.width} ${sb.height}`);
+
+  callouts.forEach(co => {
+    const ti = resolveTarget(co);
+    if (!ti) return;
+    const card = createCalloutCard(co, ti);
+    cardEls.push(card);
+    drawCalloutLine(co, ti, card);
+  });
+}
+
+// Track which chars have callouts so we know when to show tooltip vs not
+const charsWithCallouts = new Set();
+function registerCallout(sc, which) { charsWithCallouts.add(sc + ':' + which); }
+callouts.forEach(co => {
+  const t = co.target;
+  if (t.type === 'char') registerCallout(t.sc, t.which);
+  else if (t.type === 'key') {
+    // Whole key — consider both altgr chars covered
+    registerCallout(t.sc, 'altgr');
+    registerCallout(t.sc, 'altgrShift');
+  } else if (t.type === 'group') {
+    t.items.forEach(it => registerCallout(it.sc, it.which));
+  }
+});
+
+// ============================================================
+// Tooltip
+// ============================================================
+const tooltip = document.getElementById('tooltip');
+let tooltipTarget = null;
+
+function showTooltipFor(el) {
+  const ch = el.dataset.ch;
+  if (!ch) return;
+  tooltip.innerHTML = `
+    <div class="tt-head">
+      <span class="tt-char${isCombining(ch) ? ' combining' : ''}">${isSpacelike(ch) ? `<span class="space-glyph" style="--space-width: ${isSpacelike(ch)}px"></span>` : ch}</span>
+      <div style="min-width:0;text-align:left">
+        <span class="tt-code" data-copy-cp="${unicodeHex(ch)}">${unicodeHex(ch)}</span>
+        <div class="tt-name">${unicodeName(ch) || '\u00A0'}</div>
+      </div>
+    </div>
+  `;
+  const r = el.getBoundingClientRect();
+  tooltip.style.left = (r.left + r.width / 2) + 'px';
+  tooltip.style.top  = (r.bottom + 10) + 'px';
+  tooltip.style.transform = 'translate(-50%, 0)';
+  tooltip.classList.add('show');
+  tooltipTarget = el;
+}
+function hideTooltip() {
+  tooltip.classList.remove('show');
+  tooltipTarget = null;
+}
+
+keyboard.addEventListener('mouseover', (e) => {
+  const t = e.target.closest('.alt');
+  if (!t) return;
+  const key = t.closest('.key');
+  const sc = key?.dataset.sc;
+  const which = t.classList.contains('altgr-shift') ? 'altgrShift' : 'altgr';
+  //if (charsWithCallouts.has(sc + ':' + which)) return; // covered by callout, skip tooltip
+  showTooltipFor(t);
+});
+keyboard.addEventListener('mouseout', (e) => {
+  const t = e.target.closest('.alt');
+  if (!t) return;
+  // If leaving to tooltip itself, keep it
+  if (e.relatedTarget && tooltip.contains(e.relatedTarget)) return;
+  hideTooltip();
+});
+tooltip.addEventListener('mouseleave', hideTooltip);
+
+// ============================================================
+// Clipboard
+// ============================================================
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+}
+async function copyToClipboard(text, label) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Скопировано: ' + (label || text));
+  } catch (err) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Скопировано: ' + (label || text)); }
+    catch(e) { showToast('Не удалось скопировать'); }
+    ta.remove();
+  }
+}
+
+// Click on any .alt in keyboard → copy its char
+keyboard.addEventListener('click', (e) => {
+  const t = e.target.closest('.alt');
+  if (!t) return;
+  const ch = t.dataset.ch;
+  if (!ch) return;
+  const display = isSpacelike(ch) ? unicodeHex(ch) : ch;
+  copyToClipboard(ch, display);
+  t.classList.add('flash');
+  setTimeout(() => t.classList.remove('flash'), 400);
+});
+
+// Delegated click for data-copy-cp (codepoint copying) from tooltip and callouts
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-copy-cp]');
+  if (!t) return;
+  const cp = t.dataset.copyCp;
+  copyToClipboard(cp);
+});
+
+// Click on characters inside callout cards → copy the character
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('.callout-card .cc-char');
+  if (!t) return;
+  // Find parent head/line → find the cc-code for codepoint → derive char from unicodeHex
+  const head = t.closest('[style], .cc-head') || t.parentElement;
+  const code = head?.querySelector?.('.cc-code')?.dataset?.copyCp;
+  if (!code) return;
+  const cp = parseInt(code.slice(2), 16);
+  const ch = String.fromCodePoint(cp);
+  const display = isSpacelike(ch) ? code : ch;
+  copyToClipboard(ch, display);
+});
+
+// ============================================================
+// Render & reflow
+// ============================================================
+function render() {
+  renderCallouts();
+}
+
+// Initial render needs layout done; do it on next frame
+requestAnimationFrame(() => {
+  render();
+});
+window.addEventListener('resize', () => {
+  render();
+});
+
+// ============================================================
+// Text ↔ \u escape converter
+// ============================================================
+const convText = document.getElementById('conv-text');
+const convEscaped = document.getElementById('conv-escaped');
+
+function textToEscaped(str) {
+  let out = '';
+  for (const ch of str) {
+    const cp = ch.codePointAt(0);
+    if (cp <= 0xFFFF) {
+      out += '\\u' + cp.toString(16).toUpperCase().padStart(4, '0');
+    } else {
+      out += '\\u{' + cp.toString(16).toUpperCase() + '}';
+    }
+  }
+  return out;
+}
+
+function escapedToText(src) {
+  return src.replace(/\\u\{([0-9a-fA-F]+)\}|\\u([0-9a-fA-F]{4})/g, (_, braced, plain) => {
+    const cp = parseInt(braced || plain, 16);
+    try { return String.fromCodePoint(cp); } catch { return ''; }
+  });
+}
+
+let syncing = false;
+convText.addEventListener('input', () => {
+  if (syncing) return;
+  syncing = true;
+  convEscaped.value = textToEscaped(convText.value);
+  syncing = false;
+});
+convEscaped.addEventListener('input', () => {
+  if (syncing) return;
+  syncing = true;
+  convText.value = escapedToText(convEscaped.value);
+  syncing = false;
+});
+</script>
+
+</body>
+</html>
