@@ -174,6 +174,24 @@ h1 {
 .alt.altgr { font-size: 15px; margin-top: auto }
 .combining, .invisible { background: light-dark(rgb(4 28 82 / 20%), rgb(195 209 243 / 20%)); }
 .invisible { color: rgb(from currentColor r g b / 20%) !important }
+.zerowidth {
+  position: relative;
+}
+.zerowidth::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 10px;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+}
+.zerowidth::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 10px;
+  background: currentColor;
+}
 .alt.multichar {
   font-size: 5.5px;
 }
@@ -304,7 +322,7 @@ h1 {
 }
 #tooltip.show { opacity: 1; transform: translateY(0); pointer-events: all;}
 #tooltip .tt-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-#tooltip .tt-char { font-size: 22px; line-height: 1; min-width: 24px; text-align: center; white-space: nowrap; flex-shrink: 0; }
+#tooltip .tt-char { font-size: 22px; line-height: 1; min-width: 24px; text-align: center; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 #tooltip .tt-char .space-glyph {
   display: inline-block;
   width: var(--space-width);
@@ -716,7 +734,7 @@ const callouts = [
   },
   {
     target: { type: 'key', sc: '02C' },
-    explanation: 'Пробел нулевой ширины не склеивает слова и растягивается при выключке по ширине, как прочие пробелы. Символ объединения слов работает как неразрывный пробел нулевой ширины.',
+    explanation: 'Пробел нулевой ширины разрешает перенос и растягивается при выключке по ширине, как прочие пробелы. Символ объединения слов работает как неразрывный пробел нулевой ширины.',
     dx: -460, dy: -90
   },
   {
@@ -792,10 +810,11 @@ function renderCharDisplay(ch, cls) {
   const combining = isCombining(ch);
   const space = isSpacelike(ch);
   const invisible = ['\u00AD', '\u200B', '\u2060'].includes(ch);
+  const zerowidth = ['\u200B', '\u2060'].includes(ch);
   const inner = space
     ? `<span class="space-glyph" style="--space-width: ${space}px"></span>`
     : (ch == '\u00AD' ? '-' : ch);
-  return `<span class="${cls}${combining ? ' combining' : ''}${invisible ? ' invisible' : ''}${ch.length > 2 ? ' multichar' : ''}" data-ch="${ch.replace(/"/g, '&quot;')}">${inner}</span>`;
+  return `<span class="${cls}${combining ? ' combining' : ''}${zerowidth ? ' zerowidth' : ''}${invisible ? ' invisible' : ''}${ch.length > 2 ? ' multichar' : ''}" data-ch="${ch.replace(/"/g, '&quot;')}">${inner}</span>`;
 }
 
 const keyboard = document.getElementById('keyboard');
@@ -932,10 +951,11 @@ function charInfoHTML(ch, opts = {}) {
   const combining = isCombining(ch);
   const space = isSpacelike(ch);
   const invisible = ['\u00AD', '\u200B', '\u2060'].includes(ch);
+  const zerowidth = ['\u200B', '\u2060'].includes(ch);
   const glyph = space
     ? `<span class="space-glyph" style="--space-width: ${space}px"></span>`
     : (ch == '\u00AD' ? '-' : ch);
-  const cls = (opts.charClass || 'cc-char') + (combining ? ' combining' : '') + (invisible ? ' invisible' : '');
+  const cls = (opts.charClass || 'cc-char') + (combining ? ' combining' : '') + (invisible ? ' invisible' : '') + (zerowidth ? ' zerowidth' : '');
   const codeCls = opts.codeClass || 'cc-code';
   const nameCls = opts.nameClass || 'cc-name';
   const metaCls = opts.metaClass || 'cc-meta';
@@ -1016,10 +1036,11 @@ function miniLine(ch) {
   const combining = isCombining(ch);
   const space = isSpacelike(ch);
   const invisible = ['\u00AD', '\u200B', '\u2060'].includes(ch);
+  const zerowidth = ['\u200B', '\u2060'].includes(ch);
   const glyph = space ? `<span class="space-glyph" style="--space-width: ${space}px"></span>` : (ch == '\u00AD' ? '-' : ch);
   return `
     <div style="display:flex; align-items:start; gap:10px;">
-      <span class="cc-char${combining ? ' combining' : ''}${invisible ? ' invisible' : ''}" style="font-size:22px; min-width:24px;">${glyph}</span>
+      <span class="cc-char${combining ? ' combining' : ''}${invisible ? ' invisible' : ''}${zerowidth ? ' zerowidth' : ''}" style="font-size:22px; min-width:24px;">${glyph}</span>
       <div class="cc-meta">
         <span class="cc-code" data-copy-cp="${unicodeHex(ch)}">${unicodeHex(ch)}</span>
         <div class="cc-name">${unicodeName(ch)}</div>
@@ -1140,7 +1161,7 @@ function showTooltipFor(el) {
   if (!ch) return;
   tooltip.innerHTML = `
     <div class="tt-head">
-      <span class="tt-char${isCombining(ch) ? ' combining' : ''}">${isSpacelike(ch) ? `<span class="space-glyph" style="--space-width: ${isSpacelike(ch)}px"></span>` : ch}</span>
+      <span class="tt-char${isCombining(ch) ? ' combining' : ''}${['\u200B', '\u2060'].includes(ch) ? ' zerowidth' : ''}${['\u00AD', '\u200B', '\u2060'].includes(ch) ? ' invisible' : ''}">${isSpacelike(ch) ? `<span class="space-glyph" style="--space-width: ${isSpacelike(ch)}px"></span>` : ch}</span>
       <div style="min-width:0;text-align:left">
         <span class="tt-code" data-copy-cp="${unicodeHex(ch)}">${unicodeHex(ch)}</span>
         <div class="tt-name">${unicodeName(ch) || '\u00A0'}</div>
